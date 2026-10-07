@@ -5,6 +5,14 @@
 @section('content')
     <x-page-header title="My profile" subtitle="Manage your personal details and password." :breadcrumbs="['Profile' => null]" />
 
+    @php($demoLocked = $user->isProtectedDemoAccount())
+    @if ($demoLocked)
+        <div class="alert d-flex align-items-start gap-2 tone-info border-0 mb-4">
+            <i class="bi bi-shield-lock mt-1"></i>
+            <div>This is a shared <strong>demo account</strong>. Its email and password are locked so every reviewer can always sign in. Everything else works normally.</div>
+        </div>
+    @endif
+
     <div class="row g-4">
         <div class="col-lg-4">
             <div class="card">
@@ -36,7 +44,7 @@
                         <div class="col-md-6">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" maxlength="255" required
-                                   class="form-control @error('email', 'profile') is-invalid @enderror">
+                                   @readonly($demoLocked) class="form-control @error('email', 'profile') is-invalid @enderror">
                             @error('email', 'profile') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
@@ -56,6 +64,10 @@
                     </div>
                 </div>
                 <div class="card-body pt-0">
+                    @error('password', 'password')
+                        @if ($demoLocked) <div class="alert alert-warning py-2 small">{{ $message }}</div> @endif
+                    @enderror
+                    <fieldset @disabled($demoLocked)>
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label for="current_password" class="form-label">Current password</label>
@@ -75,9 +87,10 @@
                         </div>
                     </div>
                     <div class="form-text mt-2">Min 8 characters, with upper &amp; lower case letters and a number.</div>
+                    </fieldset>
                 </div>
                 <div class="card-footer bg-transparent text-end py-3">
-                    <button type="submit" class="btn btn-primary">Update password</button>
+                    <button type="submit" class="btn btn-primary" @disabled($demoLocked)>Update password</button>
                 </div>
             </form>
         </div>

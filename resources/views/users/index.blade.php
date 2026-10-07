@@ -57,7 +57,8 @@
                             <div class="identity">
                                 <x-avatar :name="$user->name" />
                                 <span class="min-w-0">
-                                    <span class="title d-block text-truncate">{{ $user->name }} @if ($isSelf)<span class="chip ms-1">You</span>@endif</span>
+                                    <span class="title d-block text-truncate">{{ $user->name }} @if ($isSelf)<span class="chip ms-1">You</span>@endif
+                                        @if ($user->isProtectedDemoAccount())<span class="chip ms-1" title="Protected demo account"><i class="bi bi-shield-lock"></i> Demo</span>@endif</span>
                                     <span class="sub d-block text-truncate">{{ $user->email }}</span>
                                 </span>
                             </div>

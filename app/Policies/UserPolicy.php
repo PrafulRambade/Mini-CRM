@@ -22,10 +22,11 @@ class UserPolicy
     }
 
     /**
-     * Admins cannot deactivate themselves (prevents locking everyone out).
+     * Admins cannot deactivate themselves or a protected demo account
+     * (prevents locking everyone out).
      */
     public function toggleStatus(User $user, User $target): bool
     {
-        return $user->isAdmin() && ! $user->is($target);
+        return $user->isAdmin() && ! $user->is($target) && ! $target->isProtectedDemoAccount();
     }
 }

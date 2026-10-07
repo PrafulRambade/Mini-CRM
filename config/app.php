@@ -23,6 +23,22 @@ return [
     'demo_logins' => (bool) env('DEMO_LOGINS', false),
 
     /*
+    | Demo-safe mode: the accounts below can use the whole app, but their
+    | password, email, role and active flag are locked so a public visitor
+    | can never lock reviewers out. Restore data with `crm:reset-demo`.
+    */
+
+    'demo_mode' => (bool) env('DEMO_MODE', false),
+
+    'demo_password' => 'Password@123',
+
+    'demo_accounts' => [
+        'admin@crm.test' => ['name' => 'Admin User', 'role' => 'admin'],
+        'sales1@crm.test' => ['name' => 'Sales One', 'role' => 'sales'],
+        'sales2@crm.test' => ['name' => 'Sales Two', 'role' => 'sales'],
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------

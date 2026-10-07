@@ -4,6 +4,7 @@ namespace App\Http\Requests\User;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Rules\LockedForDemo;
 use Illuminate\Validation\Rule;
 
 class UpdateUserRequest extends UserRequest
@@ -24,6 +25,15 @@ class UpdateUserRequest extends UserRequest
         if ($this->user()->is($this->target())) {
             $rules['role'][] = Rule::in([UserRole::Admin->value]);
             $rules['is_active'][] = 'accepted';
+        }
+
+        // Demo-safe mode: credentials, role and status of demo accounts are locked.
+        $target = $this->target();
+        if ($target->isProtectedDemoAccount()) {
+            $rules['email'][] = new LockedForDemo($target->email);
+            $rules['role'][] = new LockedForDemo($target->role->value);
+            $rules['is_active'][] = new LockedForDemo($target->is_active ? '1' : '0');
+            $rules['password'] = ['nullable', new LockedForDemo];
         }
 
         return $rules;

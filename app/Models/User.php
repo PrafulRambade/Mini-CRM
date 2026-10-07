@@ -73,6 +73,16 @@ class User extends Authenticatable
         return $this->hasMany(Lead::class, 'assigned_to');
     }
 
+    /**
+     * True for the seeded demo accounts while demo-safe mode is on; their
+     * credentials, role and active flag are then locked.
+     */
+    public function isProtectedDemoAccount(): bool
+    {
+        return config('app.demo_mode')
+            && array_key_exists(mb_strtolower((string) $this->getOriginal('email')), config('app.demo_accounts', []));
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);

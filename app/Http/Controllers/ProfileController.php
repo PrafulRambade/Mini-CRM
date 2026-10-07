@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\LockedForDemo;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -24,9 +26,15 @@ class ProfileController extends Controller
 
         $request->merge(['email' => mb_strtolower(trim((string) $request->input('email')))]);
 
+        $emailRules = ['required', 'string', 'email:rfc', 'max:255', Rule::unique('users')->ignore($user->id)];
+
+        if ($user->isProtectedDemoAccount()) {
+            $emailRules[] = new LockedForDemo($user->email);
+        }
+
         $data = $request->validateWithBag('profile', [
             'name' => ['required', 'string', 'min:2', 'max:255'],
-            'email' => ['required', 'string', 'email:rfc', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'email' => $emailRules,
         ]);
 
         $user->fill($data)->save();
@@ -36,6 +44,12 @@ class ProfileController extends Controller
 
     public function updatePassword(Request $request): RedirectResponse
     {
+        if ($request->user()->isProtectedDemoAccount()) {
+            throw ValidationException::withMessages([
+                'password' => str_replace(':attribute', 'password', LockedForDemo::MESSAGE),
+            ])->errorBag('password');
+        }
+
         $data = $request->validateWithBag('password', [
             'current_password' => ['required', 'current_password'],
             'password' => ['required', 'confirmed', 'different:current_password', Password::min(8)->letters()->mixedCase()->numbers()],
