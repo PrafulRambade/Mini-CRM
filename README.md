@@ -7,7 +7,7 @@ A Laravel 12 + MySQL CRM with role-based access, a lead pipeline that converts *
 - PHP 8.2+, Laravel 12, MySQL / MariaDB
 - Laravel Sanctum (API tokens)
 - Blade + Bootstrap 5.3 with a custom admin theme (`public/css/app.css`, `public/js/app.js`); Chart.js for dashboard charts. All front-end libraries and the Inter font are self-hosted in `public/vendor/` (no CDNs, no Node build step)
-- PHPUnit feature tests (99 tests)
+- PHPUnit feature tests (108 tests)
 
 ## Setup
 
@@ -64,6 +64,7 @@ These rules are enforced in `LeadPolicy` / `CustomerPolicy` and query scopes (`v
 
 - Leads have list, create, view, edit and delete screens. Each lead has these fields: name, email, phone, company, source (Web/Ads/Referral), status (New/In Progress/Won/Lost), assigned to, follow-up date, notes, and the linked customer.
 - The listing has search (name, email, phone, company), filters (status, source, assignee), sortable columns and pagination.
+- **AJAX listings (Leads, Customers, Users, Activity log):** filtering, search-as-you-type, sorting and paging update the table without reloading the page. Filters are sent as a CSRF-protected `POST` to `/{listing}/table` and never appear in the address bar or server logs; the server returns escaped, server-rendered HTML. Back/Forward and Refresh keep the filter state (stored in `history.state`), older requests are cancelled, and the endpoints are rate-limited per user. Without JavaScript the same links still work as normal pages.
 - Validation lives in the shared form requests (`StoreLeadRequest` / `UpdateLeadRequest`), which the web UI and the API both use:
   - email is RFC-valid and lowercased
   - phone must match a strict format

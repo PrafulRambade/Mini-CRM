@@ -25,11 +25,11 @@ class IndexUserRequest extends ListingRequest
      */
     public function filters(): array
     {
-        $status = $this->query('status');
+        $status = $this->scalar('status');
 
         return [
             'search' => $this->search(),
-            'role' => UserRole::tryFrom((string) $this->query('role'))?->value,
+            'role' => UserRole::tryFrom((string) $this->scalar('role'))?->value,
             'status' => in_array($status, ['active', 'inactive'], true) ? $status : null,
         ];
     }

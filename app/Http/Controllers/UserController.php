@@ -9,6 +9,7 @@ use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Models\User;
 use App\Services\UserService;
+use App\Support\Listing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
@@ -19,6 +20,23 @@ class UserController extends Controller
 
     public function index(IndexUserRequest $request): View
     {
+        return view('users.index', $this->listing($request));
+    }
+
+    /**
+     * AJAX: the listing fragment for the given filters (POST body, CSRF-protected).
+     */
+    public function table(IndexUserRequest $request): View
+    {
+        return view('users._listing', $this->listing($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function listing(IndexUserRequest $request): array
+    {
+        Listing::setBase(route('users.index'));
         $filters = $request->filters();
 
         $users = User::query()
@@ -31,16 +49,15 @@ class UserController extends Controller
             ->when($filters['status'], fn ($q, $status) => $q->where('is_active', $status === 'active'))
             ->orderBy($request->sort() ?? 'created_at', $request->direction())
             ->orderBy('id')
-            ->paginate($request->perPage())
-            ->withQueryString();
+            ->paginate($request->perPage());
 
-        return view('users.index', [
-            'users' => $users,
+        return [
+            'users' => Listing::paginate($users),
             'filters' => $filters,
             'roles' => UserRole::cases(),
             'sort' => $request->sort() ?? 'created_at',
             'direction' => $request->direction(),
-        ]);
+        ];
     }
 
     public function create(): View

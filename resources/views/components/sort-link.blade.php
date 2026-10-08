@@ -5,7 +5,7 @@
     $next = $active && $direction === 'asc' ? 'desc' : 'asc';
 @endphp
 
-<a href="{{ request()->fullUrlWithQuery(['sort' => $column, 'direction' => $next, 'page' => null]) }}"
+<a href="{{ \App\Support\Listing::url(['sort' => $column, 'direction' => $next, 'page' => null]) }}"
    @if ($active) aria-sort="{{ $direction === 'asc' ? 'ascending' : 'descending' }}" @endif>
     {{ $label }}
     @if ($active)

@@ -8,7 +8,7 @@
                 of <strong class="text-2">{{ number_format($paginator->total()) }}</strong> {{ $label }}
             </span>
             <form method="GET" class="d-none d-md-flex align-items-center gap-2">
-                @foreach (request()->except(['per_page', 'page']) as $key => $value)
+                @foreach (\App\Support\Listing::params(['per_page' => null, 'page' => null]) as $key => $value)
                     @if (is_string($value))
                         <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                     @endif

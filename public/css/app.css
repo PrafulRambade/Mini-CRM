@@ -574,3 +574,14 @@ a.chip:hover { border-color: var(--primary); color: var(--primary); }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* ---------- AJAX listings ---------- */
+[data-ajax-listing] { position: relative; transition: opacity .15s ease; }
+[data-ajax-listing].is-loading { opacity: .55; pointer-events: none; }
+[data-ajax-listing].is-loading::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; z-index: 5;
+    border-radius: 3px; background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    background-size: 50% 100%; background-repeat: no-repeat;
+    animation: listing-progress 1s linear infinite;
+}
+@keyframes listing-progress { from { background-position: -50% 0; } to { background-position: 150% 0; } }

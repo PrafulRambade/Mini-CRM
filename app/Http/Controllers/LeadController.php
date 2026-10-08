@@ -10,6 +10,7 @@ use App\Http\Requests\Lead\UpdateLeadRequest;
 use App\Models\Lead;
 use App\Models\User;
 use App\Services\LeadService;
+use App\Support\Listing;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -21,6 +22,23 @@ class LeadController extends Controller
 
     public function index(IndexLeadRequest $request): View
     {
+        return view('leads.index', $this->listing($request));
+    }
+
+    /**
+     * AJAX: the listing fragment for the given filters (POST body, CSRF-protected).
+     */
+    public function table(IndexLeadRequest $request): View
+    {
+        return view('leads._listing', $this->listing($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function listing(IndexLeadRequest $request): array
+    {
+        Listing::setBase(route('leads.index'));
         $filters = $request->filters();
 
         $leads = Lead::query()
@@ -28,16 +46,15 @@ class LeadController extends Controller
             ->visibleTo($request->user())
             ->filter($filters)
             ->sorted($request->sort(), $request->direction())
-            ->paginate($request->perPage())
-            ->withQueryString();
+            ->paginate($request->perPage());
 
-        return view('leads.index', [
-            'leads' => $leads,
+        return [
+            'leads' => Listing::paginate($leads),
             'filters' => $filters,
             'sort' => $request->sort() ?? 'created_at',
             'direction' => $request->direction(),
             ...$this->formOptions($request),
-        ]);
+        ];
     }
 
     public function create(Request $request): View

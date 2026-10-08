@@ -31,12 +31,12 @@ class IndexLeadRequest extends ListingRequest
      */
     public function filters(): array
     {
-        $assignedTo = filter_var($this->query('assigned_to'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $assignedTo = filter_var($this->scalar('assigned_to'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 
         return [
             'search' => $this->search(),
-            'status' => LeadStatus::tryFrom((string) $this->query('status'))?->value,
-            'source' => LeadSource::tryFrom((string) $this->query('source'))?->value,
+            'status' => LeadStatus::tryFrom((string) $this->scalar('status'))?->value,
+            'source' => LeadSource::tryFrom((string) $this->scalar('source'))?->value,
             // Only admins can filter by assignee; sales users are already scoped to themselves.
             'assigned_to' => $this->user()->isAdmin() && $assignedTo !== false ? $assignedTo : null,
         ];

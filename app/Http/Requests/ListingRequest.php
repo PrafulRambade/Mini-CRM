@@ -57,28 +57,39 @@ abstract class ListingRequest extends FormRequest
         ];
     }
 
+    /**
+     * A listing parameter as a plain string, or null. Arrays and other injected
+     * types (e.g. status[]=x) are ignored instead of causing errors.
+     */
+    public function scalar(string $key): ?string
+    {
+        $value = $this->input($key);
+
+        return is_scalar($value) ? (string) $value : null;
+    }
+
     public function search(): ?string
     {
-        $search = $this->query('search');
+        $search = $this->input('search');
 
         return is_string($search) ? mb_substr(trim($search), 0, 100) : null;
     }
 
     public function sort(): ?string
     {
-        $sort = $this->query('sort');
+        $sort = $this->input('sort');
 
         return in_array($sort, $this->sortable(), true) ? $sort : null;
     }
 
     public function direction(): string
     {
-        return $this->query('direction') === 'asc' ? 'asc' : 'desc';
+        return $this->input('direction') === 'asc' ? 'asc' : 'desc';
     }
 
     public function perPage(): int
     {
-        $perPage = filter_var($this->query('per_page'), FILTER_VALIDATE_INT);
+        $perPage = filter_var($this->scalar('per_page'), FILTER_VALIDATE_INT);
 
         return $perPage === false
             ? self::DEFAULT_PER_PAGE

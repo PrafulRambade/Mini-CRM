@@ -21,6 +21,15 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    // AJAX listing fragments: filters travel in the POST body (CSRF-protected),
+    // never in the URL. Rate-limited per user for search-as-you-type.
+    Route::middleware('throttle:listing')->group(function () {
+        Route::post('leads/table', [LeadController::class, 'table'])->name('leads.table');
+        Route::post('customers/table', [CustomerController::class, 'table'])->name('customers.table');
+        Route::post('users/table', [UserController::class, 'table'])->name('users.table');
+        Route::post('activity/table', [ActivityLogController::class, 'table'])->name('activity.table');
+    });
+
     Route::resource('leads', LeadController::class);
     Route::post('leads/{lead}/convert', [LeadController::class, 'convert'])->name('leads.convert');
 
