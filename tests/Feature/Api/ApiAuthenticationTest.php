@@ -4,6 +4,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ApiAuthenticationTest extends TestCase
@@ -21,6 +22,39 @@ class ApiAuthenticationTest extends TestCase
             ->assertJsonPath('user.role', 'admin');
 
         $this->assertDatabaseCount('personal_access_tokens', 1);
+    }
+
+    public function test_tokens_expire_after_one_hour(): void
+    {
+        config(['sanctum.expiration' => 60]);
+        $user = User::factory()->create();
+
+        $response = $this->postJson('/api/login', ['email' => $user->email, 'password' => 'password'])->assertCreated();
+
+        $expiresAt = Carbon::parse($response->json('expires_at'));
+        $this->assertEqualsWithDelta(now()->addHour()->timestamp, $expiresAt->timestamp, 5);
+
+        $token = $response->json('access_token');
+        $this->travel(59)->minutes();
+        $this->withToken($token)->getJson('/api/me')->assertOk();
+
+        $this->travel(2)->minutes();
+        $this->app['auth']->forgetGuards();
+        $this->withToken($token)->getJson('/api/me')->assertUnauthorized();
+    }
+
+    public function test_token_lifetime_can_never_be_unlimited(): void
+    {
+        foreach (['0', '', '-5'] as $value) {
+            putenv("SANCTUM_TOKEN_EXPIRATION={$value}");
+            $_ENV['SANCTUM_TOKEN_EXPIRATION'] = $_SERVER['SANCTUM_TOKEN_EXPIRATION'] = $value;
+
+            $config = require base_path('config/sanctum.php');
+            $this->assertSame(1, $config['expiration'], "SANCTUM_TOKEN_EXPIRATION='{$value}' must not disable expiry");
+        }
+
+        putenv('SANCTUM_TOKEN_EXPIRATION');
+        unset($_ENV['SANCTUM_TOKEN_EXPIRATION'], $_SERVER['SANCTUM_TOKEN_EXPIRATION']);
     }
 
     public function test_login_with_invalid_credentials_returns_422(): void

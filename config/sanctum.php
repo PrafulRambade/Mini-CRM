@@ -50,7 +50,9 @@ return [
     |
     */
 
-    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 60 * 24 * 7),
+    // API tokens are short-lived: a leaked token stops working within the hour.
+    // Never allow 0/blank here: in Sanctum that would mean "tokens never expire".
+    'expiration' => max(1, (int) env('SANCTUM_TOKEN_EXPIRATION', 60)),
 
     /*
     |--------------------------------------------------------------------------

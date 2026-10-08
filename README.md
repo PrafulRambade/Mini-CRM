@@ -103,7 +103,7 @@ These rules are enforced in `LeadPolicy` / `CustomerPolicy` and query scopes (`v
 
 ## REST API
 
-Base URL: `/api`. Every response is JSON, even when the client sends no `Accept` header. Authenticate with a Sanctum Bearer token. Tokens expire after `SANCTUM_TOKEN_EXPIRATION` minutes (default 7 days), and a daily scheduled task prunes expired tokens. Each user can make 120 requests per minute.
+Base URL: `/api`. Every response is JSON, even when the client sends no `Accept` header. Authenticate with a Sanctum Bearer token. Tokens expire after `SANCTUM_TOKEN_EXPIRATION` minutes (default **60 minutes**); when a token expires the API returns 401 and the client simply calls `POST /api/login` again. A daily scheduled task prunes expired tokens. Each user can make 120 requests per minute.
 
 | Method | Endpoint                     | Description |
 |--------|------------------------------|-------------|
