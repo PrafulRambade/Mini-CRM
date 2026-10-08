@@ -6,8 +6,8 @@ A Laravel 12 + MySQL CRM with role-based access, a lead pipeline that converts *
 
 - PHP 8.2+, Laravel 12, MySQL / MariaDB
 - Laravel Sanctum (API tokens)
-- Blade + Bootstrap 5.3 with a custom admin theme (`public/css/app.css`, `public/js/app.js`); Chart.js for dashboard charts. Assets load from CDNs, so there is no Node build step
-- PHPUnit feature tests (78 tests)
+- Blade + Bootstrap 5.3 with a custom admin theme (`public/css/app.css`, `public/js/app.js`); Chart.js for dashboard charts. All front-end libraries and the Inter font are self-hosted in `public/vendor/` (no CDNs, no Node build step)
+- PHPUnit feature tests (99 tests)
 
 ## Setup
 
@@ -166,7 +166,13 @@ tests/Feature/           Auth (web + API), Lead API, Customer API, conversion se
 ## Hardening notes
 
 - CSRF protection is on for all web forms. Session payloads are encrypted (`SESSION_ENCRYPT=true`).
-- Every response carries security headers: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy` and `Permissions-Policy`. HTTPS responses also get HSTS.
+- Every response carries security headers: `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `Cross-Origin-Opener-Policy` and `X-Permitted-Cross-Domain-Policies`. HTTPS responses also get HSTS, and `X-Powered-By` is removed.
+- **Content-Security-Policy:** only same-origin resources load, and only `<script>` tags carrying a fresh per-request nonce run, so injected scripts are refused. The policy is sent as a header and repeated in a `<meta>` tag, because some hosts (e.g. Hostinger/LiteSpeed "Force HTTPS") overwrite the header.
+- **CORS:** browsers on other websites cannot call the API (`CORS_ALLOWED_ORIGINS`, defaults to `APP_URL`).
+- **Passwords:** at least 8 characters with mixed case and a number; in production, passwords found in known data breaches (Have I Been Pwned, k-anonymity) are rejected.
+- **Audit log** (`/activity`, admins only): sign-ins, failed sign-ins and lockouts, user changes, and lead creation, edits, deletions and conversions, with user, IP and time. Append-only in the app, pruned after 180 days, and never stores passwords or note contents.
+- **Demo-safe mode** (`DEMO_MODE=true`): demo accounts can use everything, but their password, email, role and status are locked. `php artisan crm:reset-demo --force` restores the demo data.
+- `.htaccess` blocks hidden files (`.env`, `.git`), config/backup file types and directory listings.
 - Login responses take about the same time whether or not the email exists, so response timing does not reveal valid emails.
 - Search escapes LIKE wildcards. Sort columns come from an allow-list.
 - System fields (`customer_id`, `converted_at`, `created_by`) cannot be mass-assigned.

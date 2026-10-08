@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Rules\LockedForDemo;
+use App\Services\ActivityLogger;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,13 @@ class ProfileController extends Controller
             'email' => $emailRules,
         ]);
 
-        $user->fill($data)->save();
+        $user->fill($data);
+        $changed = array_keys($user->getDirty());
+        $user->save();
+
+        if ($changed) {
+            app(ActivityLogger::class)->log('user.profile_updated', 'Updated own profile', $user, ['fields' => $changed]);
+        }
 
         return back()->with('success', 'Profile updated.');
     }
@@ -52,7 +59,7 @@ class ProfileController extends Controller
 
         $data = $request->validateWithBag('password', [
             'current_password' => ['required', 'current_password'],
-            'password' => ['required', 'confirmed', 'different:current_password', Password::min(8)->letters()->mixedCase()->numbers()],
+            'password' => ['required', 'confirmed', 'different:current_password', Password::defaults()],
         ]);
 
         // Signs out every other browser session and revokes all API tokens.

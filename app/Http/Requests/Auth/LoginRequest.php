@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Services\ActivityLogger;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
@@ -52,11 +53,14 @@ class LoginRequest extends FormRequest
 
         if (! $user || ! $valid) {
             RateLimiter::hit($this->throttleKey());
+            $this->audit('auth.login_failed', 'Failed sign-in attempt', $user);
 
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
         if (! $user->is_active) {
+            $this->audit('auth.login_failed', 'Sign-in blocked: account deactivated', $user);
+
             throw ValidationException::withMessages(['email' => 'Your account has been deactivated.']);
         }
 
@@ -72,12 +76,27 @@ class LoginRequest extends FormRequest
         }
 
         event(new Lockout($this));
+        $this->audit('auth.lockout', 'Sign-in locked after too many failed attempts');
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
             'email' => __('auth.throttle', ['seconds' => $seconds, 'minutes' => ceil($seconds / 60)]),
         ])->status(429);
+    }
+
+    /**
+     * Records the attempted email (never the password) for failed/locked sign-ins.
+     */
+    private function audit(string $event, string $description, ?User $user = null): void
+    {
+        app(ActivityLogger::class)->log(
+            $event,
+            $description,
+            $user,
+            ['email' => Str::limit(mb_strtolower((string) $this->input('email')), 120), 'channel' => $this->is('api/*') ? 'api' : 'web'],
+            $user,
+        );
     }
 
     public function throttleKey(): string

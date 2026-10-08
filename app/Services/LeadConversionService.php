@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LeadStatus;
 use App\Models\Customer;
 use App\Models\Lead;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Log;
  */
 class LeadConversionService
 {
+    public function __construct(private readonly ActivityLogger $activity) {}
+
     public function convert(Lead $lead, ?int $actorId = null): Customer
     {
         return DB::transaction(function () use ($lead, $actorId) {
@@ -48,6 +51,14 @@ class LeadConversionService
                 'customer_id' => $customer->id,
                 'actor_id' => $actorId,
             ]);
+
+            $this->activity->log(
+                'lead.converted',
+                "Converted lead \"{$locked->name}\" to customer #{$customer->id}",
+                $locked,
+                ['customer_id' => $customer->id, 'new_customer' => $customer->wasRecentlyCreated],
+                $actorId ? User::find($actorId) : null,
+            );
 
             return $customer;
         });

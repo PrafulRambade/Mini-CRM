@@ -45,8 +45,7 @@
                                    class="form-control pe-5 @error('password') is-invalid @enderror"
                                    placeholder="••••••••" required autocomplete="current-password">
                             <button type="button" class="btn btn-ghost btn-icon position-absolute top-50 end-0 translate-middle-y me-1"
-                                    aria-label="Show password" data-no-loading
-                                    onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';this.firstElementChild.className=i.type==='password'?'bi bi-eye':'bi bi-eye-slash';">
+                                    aria-label="Show password" data-no-loading data-action="toggle-password" data-target="password">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </div>
@@ -68,7 +67,7 @@
                         <span class="text-muted"><i class="bi bi-info-circle"></i> Demo:</span>
                         @foreach (['admin@crm.test' => 'Admin', 'sales1@crm.test' => 'Sales 1', 'sales2@crm.test' => 'Sales 2'] as $email => $label)
                             <button type="button" class="btn btn-sm btn-light-soft" data-no-loading
-                                    onclick="document.getElementById('email').value='{{ $email }}';document.getElementById('password').value='Password@123';">
+                                    data-action="fill-demo" data-email="{{ $email }}" data-password="{{ config('app.demo_password') }}">
                                 {{ $label }}
                             </button>
                         @endforeach

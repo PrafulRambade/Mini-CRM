@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
+use App\Services\ActivityLogger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -26,6 +27,8 @@ class AuthController extends Controller
             ['*'],
             $expiresAt,
         );
+
+        app(ActivityLogger::class)->log('auth.login', 'Signed in (API token issued)', $user, ['channel' => 'api'], $user);
 
         return response()->json([
             'token_type' => 'Bearer',
@@ -50,6 +53,8 @@ class AuthController extends Controller
         if ($token instanceof PersonalAccessToken) {
             $token->delete();
         }
+
+        app(ActivityLogger::class)->log('auth.logout', 'Signed out (API token revoked)', $request->user(), ['channel' => 'api']);
 
         return response()->json(['message' => 'Logged out successfully.']);
     }

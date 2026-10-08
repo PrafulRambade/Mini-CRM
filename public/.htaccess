@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Block hidden files and folders (.env, .git, .htpasswd ...) except .well-known (SSL validation).
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -23,3 +26,19 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# No directory listings anywhere.
+Options -Indexes
+
+<IfModule mod_headers.c>
+    # Never reveal server/PHP versions, even on responses Laravel doesn't handle.
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+    # Static assets (css/js/fonts) get the same baseline protections.
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Never serve backup/config/source files that might end up in the web root.
+<FilesMatch "\.(env|log|sql|bak|ini|sh|md|lock|json|yml|yaml|xml|dist)$">
+    Require all denied
+</FilesMatch>

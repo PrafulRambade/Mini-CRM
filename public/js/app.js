@@ -103,6 +103,29 @@
         });
     });
 
+    /* ---------- Login helpers (no inline handlers: the CSP forbids them) ---------- */
+    document.addEventListener('click', function (e) {
+        var toggle = e.target.closest('[data-action="toggle-password"]');
+        if (toggle) {
+            var input = document.getElementById(toggle.dataset.target);
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            toggle.querySelector('i').className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+            toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        }
+
+        var demo = e.target.closest('[data-action="fill-demo"]');
+        if (demo) {
+            document.getElementById('email').value = demo.dataset.email;
+            document.getElementById('password').value = demo.dataset.password;
+        }
+
+        if (e.target.closest('[data-action="go-back"]')) {
+            e.preventDefault();
+            history.length > 1 ? history.back() : (window.location.href = '/dashboard');
+        }
+    });
+
     /* ---------- Auto-submit filters ---------- */
     document.addEventListener('change', function (e) {
         if (e.target.matches('[data-autosubmit]')) e.target.form.submit();

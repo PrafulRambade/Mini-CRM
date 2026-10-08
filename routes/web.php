@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
@@ -32,4 +33,5 @@ Route::middleware(['auth', 'active'])->group(function () {
     // Administration (authorization enforced by UserPolicy).
     Route::resource('users', UserController::class)->except(['show', 'destroy']);
     Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+    Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
 });

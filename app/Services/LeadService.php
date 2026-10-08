@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\User;
+use BackedEnum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -14,7 +15,10 @@ use Illuminate\Validation\ValidationException;
  */
 class LeadService
 {
-    public function __construct(private readonly LeadConversionService $conversion) {}
+    public function __construct(
+        private readonly LeadConversionService $conversion,
+        private readonly ActivityLogger $activity,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
@@ -25,6 +29,11 @@ class LeadService
             $lead = new Lead($data);
             $lead->created_by = $actor->id;
             $lead->save();
+
+            $this->activity->log('lead.created', "Created lead \"{$lead->name}\"", $lead, [
+                'status' => $lead->status->value,
+                'assigned_to' => $lead->assigned_to,
+            ], $actor);
 
             $this->convertIfWon($lead, $actor);
 
@@ -46,7 +55,24 @@ class LeadService
                 ]);
             }
 
+            // Record which fields changed (names only, plus status/owner transitions; no personal data).
+            $changed = array_keys($lead->getDirty());
+            $transitions = collect(['status', 'assigned_to'])
+                ->filter(fn (string $field) => $lead->isDirty($field))
+                ->mapWithKeys(fn (string $field) => [$field => [
+                    'from' => $this->scalar($lead->getOriginal($field)),
+                    'to' => $this->scalar($lead->getAttribute($field)),
+                ]])
+                ->all();
+
             $lead->save();
+
+            if ($changed) {
+                $this->activity->log('lead.updated', "Updated lead \"{$lead->name}\"", $lead, [
+                    'fields' => $changed,
+                    ...$transitions,
+                ], $actor);
+            }
 
             $this->convertIfWon($lead, $actor);
 
@@ -64,9 +90,19 @@ class LeadService
         return $lead->load(['assignee', 'customer']);
     }
 
-    public function delete(Lead $lead): void
+    public function delete(Lead $lead, ?User $actor = null): void
     {
         $lead->delete();
+
+        $this->activity->log('lead.deleted', "Deleted lead \"{$lead->name}\"", $lead, [
+            'status' => $lead->status->value,
+            'was_converted' => $lead->isConverted(),
+        ], $actor);
+    }
+
+    private function scalar(mixed $value): mixed
+    {
+        return $value instanceof BackedEnum ? $value->value : $value;
     }
 
     private function convertIfWon(Lead $lead, User $actor): void

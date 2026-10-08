@@ -32,7 +32,7 @@ abstract class UserRequest extends FormRequest
             ],
             'role' => ['required', Rule::enum(UserRole::class)],
             'is_active' => ['boolean'],
-            'password' => [$ignore ? 'nullable' : 'required', 'confirmed', Password::min(8)->letters()->mixedCase()->numbers()],
+            'password' => [$ignore ? 'nullable' : 'required', 'confirmed', Password::defaults()],
         ];
     }
 }

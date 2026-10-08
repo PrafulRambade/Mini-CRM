@@ -50,6 +50,12 @@
                     <i class="bi bi-people"></i><span class="link-text">Users &amp; Roles</span>
                 </a>
             @endcan
+            @can('viewActivityLog')
+                <a href="{{ route('activity.index') }}" class="sidebar-link @if(request()->routeIs('activity.*')) active @endif"
+                   data-sidebar-tip title="Activity Log">
+                    <i class="bi bi-journal-text"></i><span class="link-text">Activity Log</span>
+                </a>
+            @endcan
 
             <div class="nav-divider"></div>
             <p class="nav-heading">Account</p>
